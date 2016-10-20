@@ -1,7 +1,7 @@
 <template>
-    <div class="mask" v-if="mask && display" @click="close"></div>
-    <div class="dialog-wrapper" v-show="display" transistion="dialog" transition-mode="in-out">
-        <div :class="[type>2&&title?'dialog-head':'alert-head']">
+    <div class="dialog-mask" v-if="mask && display" @click="close"></div>
+    <div :id="id" class="dialog-wrapper" v-show="display" transition="expand">
+        <div :class="['dialog-head', type>2&&title?'prompt-head':'alert-head']">
             <div class="dialog-title" v-if="type>2&&title">
                 {{title}}
             </div>
@@ -24,13 +24,15 @@
     export default {
         data() {
             return {
-                type: 1, // 1.关闭，2.确定取消3.标题确定取消，>3自定义
+                id: new Date().getTime().toString() + Math.random().toString(),
+                type: 1,
                 display: false,
                 title: '提示',
                 msg: '未选中数据',
                 submitCb: null,
                 submitParams: null,
-                btnName: ['确定', '取消', '关闭']
+                btnName: ['确定', '取消', '关闭'],
+                orientation: true
             }
         },
         props: {
@@ -38,21 +40,20 @@
                 type: Object,
                 default() {
                     return {
-                        type: 1, // 1、2.无标题无确定，3.有标题确定，>3有标题确定内容自定义
+                        type: 1, // 1.关闭，2.确定取消3.标题确定取消，>3自定义
                         display: false,
                         title: '提示',
                         msg: '未选中数据',
                         submitCb: null,
                         submitParams: null,
                         btnName: ['确定', '取消', '关闭'],
-                        width: [384, 512],
-                        height: [198, 280],
+                        width: ['318px', '384px', '512px'],
+                        height: ['138px', '198px', '280px'],
                     }
                 }
             },
             dialog: {
                 type: Object,
-                twoWay: true,
                 required: true
             },
             mask: {
@@ -68,8 +69,10 @@
             dialog: {
                 handler() {
                     this.mixinConfig();
-                    this.$nextTick(() => {
-                        this._resetPosition();
+                    this.animate(this.wrapper);
+                    this.$nextTick(function () {
+                        this._reLayout(this.wrapper);
+                        this._resetPosition(this.wrapper);
                     });
                     this.display = true;
                 }
@@ -77,39 +80,89 @@
         },
         methods: {
             mixinConfig() {
-                console.log(`config=> ${JSON.stringify(this.config)}`);
-                if (this.dialog) {
-                    let config = Object.assign({}, this.config, this.dialog);
-                    let self = this;
-                    Object.keys(config).forEach(key => {
-                        switch (key) {
-                            case 'btnName':
-                                console.log(`btnName=> ${JSON.stringify(config.btnName)}`);
-                                if (self.dialog.btnName) {
-                                    let len = self.dialog.btnName.length;
-                                    if (len === 1 && config.type === 1) {
-                                        self.btnName = config.btnName;
-                                    }
-                                    if (len > 1 && config.type > 1) {
-                                        self.btnName = config.btnName;
-                                    }
-                                } else {
-                                    if (config.type === 1) {
-                                        self.btnName = [self.config.btnName[2]];
-                                        console.log(`btnName=> ${JSON.stringify(self.btnName)}`);
-                                    }
-                                    if (config.type > 1) {
-                                        self.btnName = [self.config.btnName[1], self.config.btnName[0]];
-                                    }
-                                }
-                                console.log(`btnName=> ${JSON.stringify(self.btnName)}`);
-                            case 'display': case 'width':  case 'height':
-                                return;
-                            default:
-                                this[key] = config[key];
-                        }
-                    });
+                if (!this.dialog) {
+                    return;
                 }
+                let config = Object.assign({}, this.config, this.dialog);
+                let self = this;
+                Object.keys(config).forEach(key => {
+                    switch (key) {
+                        case 'btnName':
+                            if (self.dialog.btnName) {
+                                let len = self.dialog.btnName.length;
+                                if (len === 1 && config.type === 1) {
+                                    self.btnName = config.btnName;
+                                }
+                                if (len > 1 && config.type > 1) {
+                                    self.btnName = config.btnName;
+                                }
+                            } else {
+                                if (config.type === 1) {
+                                    self.btnName = [self.config.btnName[2]];
+                                }
+                                if (config.type > 1) {
+                                    self.btnName = [self.config.btnName[1], self.config.btnName[0]];
+                                }
+                            }
+                        case 'display':
+                        case 'width':
+                        case 'height':
+                            return;
+                        default:
+                            this[key] = config[key];
+                    }
+                });
+                console.log('mixinConfig(data: %s)', JSON.stringify(this.$data));
+            },
+            _reLayout(wrapper) {
+                if (!wrapper || !this.dialog) {
+                    return;
+                }
+                if (this.dialog.width) {
+                    wrapper.style.width = this.dialog.width;
+                } else {
+                    switch (this.type) {
+                        case 1:
+                        case 2:
+                            wrapper.style.width = this.config.width[0];
+                            break;
+                        case 3:
+                            wrapper.style.width = this.config.width[1];
+                            break;
+                        default:
+                            wrapper.style.width = this.config.width[2];
+                    }
+                }
+
+                if (this.dialog.height) {
+                    wrapper.style.height = this.dialog.height;
+                } else {
+                    switch (this.type) {
+                        case 1:
+                        case 2:
+                            wrapper.style.height = this.config.height[0];
+                            break;
+                        case 3:
+                            wrapper.style.height = this.config.height[1];
+                            break;
+                        default:
+                            wrapper.style.height = this.config.height[2];
+                    }
+                }
+            },
+            _resetPosition(wrapper) {
+                if (wrapper) {
+                    wrapper.style.left = (document.documentElement.clientWidth - wrapper.offsetWidth) / 2 + 'px';
+                    wrapper.style.top = (document.documentElement.clientHeight - wrapper.offsetHeight) / 2 + 'px';
+                }
+            },
+            animate(wrapper) {
+                if (this.orientation) {
+                    wrapper.style.top = document.documentElement.clientHeight + 'px';
+                } else {
+                    wrapper.style.top = 0;
+                }
+                this.orientation = !this.orientation;
             },
             close() {
                 this.display = false;
@@ -119,53 +172,28 @@
                 if (this.fullfilled) {
                     this.close();
                 }
-            },
-            _resetPosition() {
-                let wrapper = document.querySelector('.dialog-wrapper');
-                if (!wrapper || !this.dialog) {
-                    return;
-                }
-
-                if (this.dialog.width) {
-                    wrapper.style.width = this.dialog.width
-                } else {
-                    if (this.type == 3) {
-                        wrapper.style.width = this.config.width[0] + 'px';
-                    } else if (this.type > 3) {
-                        wrapper.style.width = this.config.width[1] + 'px';
-                    }
-                }
-
-                if (this.dialog.height) {
-                    wrapper.style.height = this.dialog.height
-                } else {
-                    if (this.type == 3) {
-                        wrapper.style.height = this.config.height[0] + 'px';
-                    } else if (this.type > 3) {
-                        wrapper.style.height = this.config.height[1] + 'px';
-                    }
-                }
-
-                wrapper.style.top = (document.documentElement.clientHeight - wrapper.offsetHeight) / 2 + 'px';
-                wrapper.style.left = (document.documentElement.clientWidth - wrapper.offsetWidth) / 2 + 'px';
-                console.log('height: %s\n width: %s\n', wrapper.offsetHeight, wrapper.offsetWidth)
             }
         },
+        beforeCompile() {
+            this.mixinConfig();
+        },
         ready() {
+            this.wrapper = document.getElementById(this.id);
+            this.animate(this.wrapper);
             this.mixinConfig();
             this.$nextTick(function () {
-                this._resetPosition();
+                this._reLayout(this.wrapper);
+                this._resetPosition(this.wrapper);
             });
             this.display = true;
-            let self = this;
-            window.onresize = () => {
-                self._resetPosition();
-            }
+            window.onresize = function () {
+                this._resetPosition(this.wrapper);
+            }.bind(this);
         }
     };
 </script>
 <style scoped>
-    .mask {
+    .dialog-mask {
         position: fixed;
         left: 0;
         right: 0;
@@ -184,18 +212,6 @@
         text-align: center;
         background-color: #fff;
         opacity: .95;
-        transition: all .3s ease;
-        width: 318px;
-        height: 138px;
-    }
-
-    .dialog-enter, .dialog-leave {
-        opacity: 0;
-    }
-
-    .dialog-head {
-        background-color: #ececec;
-        height: 40px;
     }
 
     .alert-head {
@@ -203,7 +219,12 @@
         height: 28px;
     }
 
-    .dialog-head .dialog-title {
+    .prompt-head {
+        background-color: #ececec;
+        height: 40px;
+    }
+
+    .dialog-title {
         float: left;
         color: #000;
         font: 16px/2.6 "微软雅黑", arial, sans-serif;
@@ -217,9 +238,6 @@
         line-height: 2.2;
         height: 100%;
         margin-right: 10px;
-    }
-
-    .dialog-body {
     }
 
     .dialog-foot {
@@ -261,5 +279,13 @@
 
     .dialog-data {
         margin: 40px 46px 12px;
+    }
+
+    .expand-transition {
+        transition: all .3s ease;
+    }
+
+    .expand-enter, .expand-leave {
+        opacity: 0;
     }
 </style>
