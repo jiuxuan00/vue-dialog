@@ -1,8 +1,8 @@
 <template>
     <div class="mask" v-if="mask && display" @click="close"></div>
     <div class="dialog-wrapper" v-show="display" transistion="dialog" transition-mode="in-out">
-        <div :class="[title?'dialog-head':'alert-head']">
-            <div class="dialog-title" v-if="title">
+        <div :class="[type>2&&title?'dialog-head':'alert-head']">
+            <div class="dialog-title" v-if="type>2&&title">
                 {{title}}
             </div>
             <div class="dialog-close">
@@ -26,7 +26,7 @@
             return {
                 type: 1, // 1.关闭，2.确定取消3.标题确定取消，>3自定义
                 display: false,
-                title: '',
+                title: '提示',
                 msg: '未选中数据',
                 submitCb: null,
                 submitParams: null,
@@ -40,7 +40,7 @@
                     return {
                         type: 1, // 1、2.无标题无确定，3.有标题确定，>3有标题确定内容自定义
                         display: false,
-                        title: '',
+                        title: '提示',
                         msg: '未选中数据',
                         submitCb: null,
                         submitParams: null,
