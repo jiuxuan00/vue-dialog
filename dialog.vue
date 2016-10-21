@@ -76,6 +76,11 @@
                     });
                     this.display = true;
                 }
+            },
+            fullfilled() {
+                if (this.fullfilled) {
+                    this.close();
+                }
             }
         },
         methods: {
@@ -158,8 +163,10 @@
             },
             animate(wrapper) {
                 if (this.orientation) {
-                    wrapper.style.top = document.documentElement.clientHeight + 'px';
+                    wrapper.style.left = document.documentElement.clientWidth + 'px';
+                    wrapper.style.top = 0;
                 } else {
+                    wrapper.style.left = 0;
                     wrapper.style.top = 0;
                 }
                 this.orientation = !this.orientation;
@@ -241,8 +248,8 @@
     }
 
     .dialog-foot {
-        height: 80px;
-        padding: 18px 0 30px;
+        height: 70px;
+        padding: 18px 0 0;
         clear: both;
     }
 
