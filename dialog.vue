@@ -24,7 +24,7 @@
     export default {
         data() {
             return {
-                id: new Date().getTime().toString() + Math.random().toString(),
+                id: new Date().getTime().toString() + Math.random().toString().slice(2),
                 type: 1,
                 display: false,
                 title: '提示',
@@ -70,11 +70,11 @@
                 handler() {
                     this.mixinConfig();
                     this.animate(this.wrapper);
+                    this.display = true;
                     this.$nextTick(function () {
                         this._reLayout(this.wrapper);
                         this._resetPosition(this.wrapper);
                     });
-                    this.display = true;
                 }
             },
             fullfilled() {
@@ -93,14 +93,8 @@
                 Object.keys(config).forEach(key => {
                     switch (key) {
                         case 'btnName':
-                            if (self.dialog.btnName) {
-                                let len = self.dialog.btnName.length;
-                                if (len === 1 && config.type === 1) {
-                                    self.btnName = config.btnName;
-                                }
-                                if (len > 1 && config.type > 1) {
-                                    self.btnName = config.btnName;
-                                }
+                            if (self.dialog.btnName && self.dialog.btnName.length > 0) {
+                                self.btnName = config.btnName;
                             } else {
                                 if (config.type === 1) {
                                     self.btnName = [self.config.btnName[2]];
@@ -117,14 +111,22 @@
                             this[key] = config[key];
                     }
                 });
-                console.log('mixinConfig(data: %s)', JSON.stringify(this.$data));
+//                console.log('mixinConfig(data: %s)', JSON.stringify(this.$data));
             },
             _reLayout(wrapper) {
                 if (!wrapper || !this.dialog) {
                     return;
                 }
+
                 if (this.dialog.width) {
                     wrapper.style.width = this.dialog.width;
+
+                    let w = parseInt(this.dialog.width.slice(0, -2));
+                    let maxW = Math.ceil(document.documentElement.clientWidth / 2);
+
+                    if (w > maxW || wrapper.offsetWidth > maxW) {
+                        wrapper.style.width = maxW + 'px';
+                    }
                 } else {
                     switch (this.type) {
                         case 1:
@@ -141,6 +143,13 @@
 
                 if (this.dialog.height) {
                     wrapper.style.height = this.dialog.height;
+
+                    let h = parseInt(this.dialog.height.slice(0, -2));
+                    let maxH = Math.ceil(document.documentElement.clientHeight / 2);
+                    if (h > maxH || wrapper.offsetHeight > maxH) {
+                        this.body.style.height = maxH - this.head.offsetHeight - this.foot.offsetHeight - 2 + 'px';
+                        this.body.style['overflow-y'] = 'auto';
+                    }
                 } else {
                     switch (this.type) {
                         case 1:
@@ -172,6 +181,9 @@
                 this.orientation = !this.orientation;
             },
             close() {
+                this.body.style['overflow-y'] = 'visible';
+                this.body.style.width = 'auto';
+                this.body.style.height = 'auto';
                 this.display = false;
             },
             submit() {
@@ -181,18 +193,21 @@
                 }
             }
         },
-        beforeCompile() {
+        created() {
             this.mixinConfig();
         },
         ready() {
             this.wrapper = document.getElementById(this.id);
-            this.animate(this.wrapper);
-            this.mixinConfig();
+            this.head = this.wrapper.querySelector('.dialog-head');
+            this.foot = this.wrapper.querySelector('.dialog-foot');
+            this.body = this.wrapper.querySelector('.dialog-body');
+            this.display = true;
             this.$nextTick(function () {
+                this.animate(this.wrapper);
                 this._reLayout(this.wrapper);
                 this._resetPosition(this.wrapper);
             });
-            this.display = true;
+
             window.onresize = function () {
                 this._resetPosition(this.wrapper);
             }.bind(this);
@@ -218,7 +233,6 @@
         border-radius: 3px;
         text-align: center;
         background-color: #fff;
-        opacity: .95;
     }
 
     .alert-head {
@@ -290,6 +304,7 @@
 
     .expand-transition {
         transition: all .3s ease;
+        opacity: 0.96;
     }
 
     .expand-enter, .expand-leave {
