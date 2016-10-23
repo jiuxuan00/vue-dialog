@@ -62,12 +62,13 @@
             },
             fullfilled: {
                 type: Boolean,
+                twoWay: true,
                 default: true
             }
         },
         watch: {
             dialog: {
-                handler() {
+                handler(val) {
                     this.mixinConfig();
                     this.animate(this.wrapper);
                     this.display = true;
@@ -76,6 +77,12 @@
                         this._resetPosition(this.wrapper);
                     });
                 }
+            },
+            'dialog.submitCb': function (val) {
+                this.submitCb = val;
+            },
+            'dialog.submitParams': function (val) {
+                this.submitParams = val;
             },
             fullfilled() {
                 if (this.fullfilled) {
@@ -184,6 +191,7 @@
                 this.body.style['overflow-y'] = 'visible';
                 this.body.style.width = 'auto';
                 this.body.style.height = 'auto';
+                this.fullfilled = true;
                 this.display = false;
             },
             submit() {
