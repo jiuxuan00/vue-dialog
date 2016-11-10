@@ -42,6 +42,8 @@
                     return {
                         type: 1, // 1.关闭，2.确定取消3.标题确定取消，>3自定义
                         display: false,
+                        autoclose: false,
+                        millisecond: 1000,
                         title: '提示',
                         msg: '未选中数据',
                         submitCb: null,
@@ -75,6 +77,7 @@
                     this.$nextTick(function () {
                         this._reLayout(this.wrapper);
                         this._resetPosition(this.wrapper);
+                        this.selfClosing(this.dialog.millisecond);
                     });
                 }
             },
@@ -113,6 +116,8 @@
                         case 'display':
                         case 'width':
                         case 'height':
+                        case "autoclose":
+                        case "millisecond":
                             return;
                         default:
                             this[key] = config[key];
@@ -194,6 +199,13 @@
                 this.fullfilled = true;
                 this.display = false;
             },
+            selfClosing(ms = 1000) {
+                if (this.dialog.autoclose) {
+                    setTimeout(function () {
+                        this.close();
+                    }.bind(this), ms);
+                }
+            },
             submit() {
                 this.submitCb && this.submitCb(this.submitParams);
                 if (this.fullfilled) {
@@ -214,6 +226,7 @@
                 this.animate(this.wrapper);
                 this._reLayout(this.wrapper);
                 this._resetPosition(this.wrapper);
+                this.selfClosing(this.dialog.millisecond);
             });
 
             window.onresize = function () {
@@ -229,7 +242,7 @@
         right: 0;
         top: 0;
         bottom: 0;
-        background-color: #000000;
+        background-color: #000;
         opacity: 0.6;
         z-index: 999;
     }
@@ -256,9 +269,13 @@
     .dialog-title {
         float: left;
         color: #000;
-        font: 16px/2.6 "微软雅黑", arial, sans-serif;
+        font: 16px/2.5 "微软雅黑", arial, sans-serif;
         text-indent: 16px;
         font-weight: bold;
+    }
+
+    .dialog-body {
+        padding: 12px 30px 0;
     }
 
     .dialog-close {
@@ -270,8 +287,8 @@
     }
 
     .dialog-foot {
-        height: 70px;
-        padding: 18px 0 0;
+        height: 64px;
+        padding: 16px 0 0;
         clear: both;
     }
 
